@@ -1,0 +1,400 @@
+import java.util.*;
+
+// Energy Source Class (for generating energy)
+class EnergySource {
+    double capacity;
+    double efficiency;
+    String type;
+
+    public EnergySource(double capacity, double efficiency, String type) {
+        this.capacity = capacity;
+        this.efficiency = efficiency;
+        this.type = type;
+    }
+
+    public double getOptimizedGeneration() {
+        return this.capacity * this.efficiency;
+    }
+}
+
+// Energy Storage Class
+class EnergyStorage {
+    double capacity;
+    double currentStored;
+
+    public EnergyStorage(double capacity, double currentStored) {
+        this.capacity = capacity;
+        this.currentStored = currentStored;
+    }
+
+    public double storeEnergy(double energy) {
+        double spaceLeft = capacity - currentStored;
+        double energyStored = Math.min(spaceLeft, energy);
+        currentStored += energyStored;
+        return energy - energyStored; // Excess energy not stored
+    }
+}
+
+// Grid Connection Class (for Kruskal's & Prim's Algorithms)
+class GridConnection {
+    int u, v;
+    double cost;
+
+    public GridConnection(int u, int v, double cost) {
+        this.u = u;
+        this.v = v;
+        this.cost = cost;
+    }
+}
+
+// Union-Find for Kruskal's Algorithm
+class UnionFind {
+    int[] parent, rank;
+
+    UnionFind(int n) {
+        parent = new int[n];
+        rank = new int[n];
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void union(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            if (rank[rootX] > rank[rootY]) parent[rootY] = rootX;
+            else if (rank[rootX] < rank[rootY]) parent[rootX] = rootY;
+            else {
+                parent[rootY] = rootX;
+                rank[rootX]++;
+            }
+        }
+    }
+}
+
+// Kruskal's Algorithm for Minimum Spanning Tree
+class Kruskal {
+    public static void kruskal(List<GridConnection> edges, int n) {
+        Collections.sort(edges, Comparator.comparingDouble(e -> e.cost));
+        UnionFind uf = new UnionFind(n);
+        List<GridConnection> result = new ArrayList<>();
+        for (GridConnection edge : edges) {
+            if (uf.find(edge.u) != uf.find(edge.v)) {
+                uf.union(edge.u, edge.v);
+                result.add(edge);
+            }
+        }
+
+        System.out.println("Minimum Spanning Tree (Kruskal's):");
+        for (GridConnection edge : result) {
+            System.out.println("Node " + edge.u + " - Node " + edge.v + " with cost " + edge.cost);
+        }
+    }
+}
+
+// Prim's Algorithm for Minimum Spanning Tree
+class Prim {
+    public static void prim(int n, List<List<GridConnection>> graph) {
+        PriorityQueue<GridConnection> pq = new PriorityQueue<>(Comparator.comparingDouble(e -> e.cost));
+        boolean[] visited = new boolean[n];
+        visited[0] = true;
+
+        for (GridConnection edge : graph.get(0)) pq.offer(edge);
+
+        List<GridConnection> mst = new ArrayList<>();
+        while (!pq.isEmpty()) {
+            GridConnection edge = pq.poll();
+            if (visited[edge.v]) continue;
+            visited[edge.v] = true;
+            mst.add(edge);
+
+            for (GridConnection nextEdge : graph.get(edge.v)) {
+                if (!visited[nextEdge.v]) pq.offer(nextEdge);
+            }
+        }
+
+        System.out.println("Minimum Spanning Tree (Prim's):");
+        for (GridConnection edge : mst) {
+            System.out.println("Node " + edge.u + " - Node " + edge.v + " with cost " + edge.cost);
+        }
+    }
+}
+
+// Dijkstra's Algorithm for Shortest Path
+class Dijkstra {
+    public static void dijkstra(int n, List<List<GridConnection>> graph, int start) {
+        double[] dist = new double[n];
+        Arrays.fill(dist, Double.MAX_VALUE);
+        dist[start] = 0;
+
+        PriorityQueue<GridConnection> pq = new PriorityQueue<>(Comparator.comparingDouble(e -> e.cost));
+        pq.offer(new GridConnection(start, start, 0));
+
+        while (!pq.isEmpty()) {
+            GridConnection edge = pq.poll();
+            int u = edge.v;
+
+            for (GridConnection nextEdge : graph.get(u)) {
+                int v = nextEdge.v;
+                double weight = nextEdge.cost;
+
+                if (dist[u] + weight < dist[v]) {
+                    dist[v] = dist[u] + weight;
+                    pq.offer(new GridConnection(v, v, dist[v]));
+                }
+            }
+        }
+
+        System.out.println("Shortest Path Distances:");
+        for (int i = 0; i < n; i++) {
+            System.out.println("Distance from " + start + " to " + i + ": " + dist[i]);
+        }
+    }
+}
+
+// BFS Algorithm for Exploring Grid
+class GraphBFS {
+    private int V;
+    private List<List<Integer>> adjList;
+
+    public GraphBFS(int v) {
+        V = v;
+        adjList = new ArrayList<>();
+        for (int i = 0; i < v; i++) adjList.add(new ArrayList<>());
+    }
+
+    public void addEdge(int u, int v) {
+        adjList.get(u).add(v);
+        adjList.get(v).add(u);
+    }
+
+    public void bfs(int start) {
+        boolean[] visited = new boolean[V];
+        Queue<Integer> queue = new LinkedList<>();
+        visited[start] = true;
+        queue.add(start);
+
+        while (!queue.isEmpty()) {
+            int node = queue.poll();
+            System.out.print(node + " ");
+
+            for (int neighbor : adjList.get(node)) {
+                if (!visited[neighbor]) {
+                    visited[neighbor] = true;
+                    queue.add(neighbor);
+                }
+            }
+        }
+    }
+}
+
+// DFS Algorithm for Exploring Grid
+class GraphDFS {
+    private int V;
+    private List<List<Integer>> adjList;
+
+    public GraphDFS(int v) {
+        V = v;
+        adjList = new ArrayList<>();
+        for (int i = 0; i < v; i++) adjList.add(new ArrayList<>());
+    }
+
+    public void addEdge(int u, int v) {
+        adjList.get(u).add(v);
+        adjList.get(v).add(u);
+    }
+
+    public void dfs(int start) {
+        boolean[] visited = new boolean[V];
+        dfsHelper(start, visited);
+    }
+
+    private void dfsHelper(int node, boolean[] visited) {
+        visited[node] = true;
+        System.out.print(node + " ");
+
+        for (int neighbor : adjList.get(node)) {
+            if (!visited[neighbor]) {
+                dfsHelper(neighbor, visited);
+            }
+        }
+    }
+}
+
+// Topological Sort for Scheduling
+class TopologicalSort {
+    public static void topologicalSort(int n, List<List<Integer>> graph) {
+        int[] inDegree = new int[n];
+        for (List<Integer> edges : graph) {
+            for (int v : edges) {
+                inDegree[v]++;
+            }
+        }
+
+        Queue<Integer> queue = new LinkedList<>();
+        for (int i = 0; i < n; i++) {
+            if (inDegree[i] == 0) queue.offer(i);
+        }
+
+        List<Integer> sorted = new ArrayList<>();
+        while (!queue.isEmpty()) {
+            int u = queue.poll();
+            sorted.add(u);
+
+            for (int v : graph.get(u)) {
+                if (--inDegree[v] == 0) queue.offer(v);
+            }
+        }
+
+        System.out.println("Topological Sort:");
+        for (int u : sorted) {
+            System.out.print(u + " ");
+        }
+    }
+}
+
+// Main Class
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("Choose an option:");
+        System.out.println("1. Energy Optimization");
+        System.out.println("2. Kruskal's Algorithm");
+        System.out.println("3. Prim's Algorithm");
+        System.out.println("4. Dijkstra's Algorithm");
+        System.out.println("5. BFS Graph Exploration");
+        System.out.println("6. DFS Graph Exploration");
+        System.out.println("7. Topological Sort");
+        System.out.println("0. Exit");
+
+        int choice = sc.nextInt();
+        while (choice != 0) {
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter capacity of energy source: ");
+                    double capacity = sc.nextDouble();
+                    System.out.print("Enter efficiency of energy source: ");
+                    double efficiency = sc.nextDouble();
+                    System.out.print("Enter type of energy source (e.g., Solar, Wind): ");
+                    String type = sc.next();
+                    EnergySource es = new EnergySource(capacity, efficiency, type);
+                    System.out.println("Optimized Energy Generation: " + es.getOptimizedGeneration());
+                    break;
+
+                case 2:
+                    System.out.print("Enter number of grid connections: ");
+                    int numEdges = sc.nextInt();
+                    List<GridConnection> edges = new ArrayList<>();
+                    for (int i = 0; i < numEdges; i++) {
+                        System.out.print("Enter node1, node2, and cost for edge " + (i + 1) + ": ");
+                        int u = sc.nextInt();
+                        int v = sc.nextInt();
+                        double cost = sc.nextDouble();
+                        edges.add(new GridConnection(u, v, cost));
+                    }
+                    Kruskal.kruskal(edges, numEdges);
+                    break;
+
+                case 3:
+                    System.out.print("Enter number of nodes: ");
+                    int numNodes = sc.nextInt();
+                    List<List<GridConnection>> graph = new ArrayList<>();
+                    for (int i = 0; i < numNodes; i++) graph.add(new ArrayList<>());
+                    System.out.print("Enter number of edges: ");
+                    int numGraphEdges = sc.nextInt();
+                    for (int i = 0; i < numGraphEdges; i++) {
+                        System.out.print("Enter node1, node2, and cost for edge " + (i + 1) + ": ");
+                        int u = sc.nextInt();
+                        int v = sc.nextInt();
+                        double cost = sc.nextDouble();
+                        graph.get(u).add(new GridConnection(u, v, cost));
+                    }
+                    Prim.prim(numNodes, graph);
+                    break;
+
+                case 4:
+                    System.out.print("Enter number of nodes: ");
+                    int dijkstraNodes = sc.nextInt();
+                    List<List<GridConnection>> dijkstraGraph = new ArrayList<>();
+                    for (int i = 0; i < dijkstraNodes; i++) dijkstraGraph.add(new ArrayList<>());
+                    System.out.print("Enter number of edges: ");
+                    int numDijkstraEdges = sc.nextInt();
+                    for (int i = 0; i < numDijkstraEdges; i++) {
+                        System.out.print("Enter node1, node2, and cost for edge " + (i + 1) + ": ");
+                        int u = sc.nextInt();
+                        int v = sc.nextInt();
+                        double cost = sc.nextDouble();
+                        dijkstraGraph.get(u).add(new GridConnection(u, v, cost));
+                    }
+                    System.out.print("Enter start node: ");
+                    int start = sc.nextInt();
+                    Dijkstra.dijkstra(dijkstraNodes, dijkstraGraph, start);
+                    break;
+
+                case 5:
+                    System.out.print("Enter number of nodes: ");
+                    int bfsNodes = sc.nextInt();
+                    GraphBFS bfsGraph = new GraphBFS(bfsNodes);
+                    System.out.print("Enter number of edges: ");
+                    int numBfsEdges = sc.nextInt();
+                    for (int i = 0; i < numBfsEdges; i++) {
+                        System.out.print("Enter node1 and node2 for edge " + (i + 1) + ": ");
+                        int u = sc.nextInt();
+                        int v = sc.nextInt();
+                        bfsGraph.addEdge(u, v);
+                    }
+                    System.out.print("BFS Traversal: ");
+                    bfsGraph.bfs(0);
+                    System.out.println();
+                    break;
+
+                case 6:
+                    System.out.print("Enter number of nodes: ");
+                    int dfsNodes = sc.nextInt();
+                    GraphDFS dfsGraph = new GraphDFS(dfsNodes);
+                    System.out.print("Enter number of edges: ");
+                    int numDfsEdges = sc.nextInt();
+                    for (int i = 0; i < numDfsEdges; i++) {
+                        System.out.print("Enter node1 and node2 for edge " + (i + 1) + ": ");
+                        int u = sc.nextInt();
+                        int v = sc.nextInt();
+                        dfsGraph.addEdge(u, v);
+                    }
+                    System.out.print("DFS Traversal: ");
+                    dfsGraph.dfs(0);
+                    System.out.println();
+                    break;
+
+                case 7:
+                    System.out.print("Enter number of nodes: ");
+                    int topoNodes = sc.nextInt();
+                    List<List<Integer>> topoGraph = new ArrayList<>();
+                    for (int i = 0; i < topoNodes; i++) topoGraph.add(new ArrayList<>());
+                    System.out.print("Enter number of edges: ");
+                    int numTopoEdges = sc.nextInt();
+                    for (int i = 0; i < numTopoEdges; i++) {
+                        System.out.print("Enter node1 and node2 for edge " + (i + 1) + ": ");
+                        int u = sc.nextInt();
+                        int v = sc.nextInt();
+                        topoGraph.get(u).add(v);
+                    }
+                    TopologicalSort.topologicalSort(topoNodes, topoGraph);
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+
+            System.out.println("\nChoose another option (or 0 to exit):");
+            choice = sc.nextInt();
+        }
+
+        System.out.println("Program terminated.");
+        sc.close();
+    }
+}
